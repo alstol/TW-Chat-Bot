@@ -91,30 +91,38 @@ Bot.prototype.handleMesage = function(message, room, player, time) {
         this.updateData(message, room, player, time);
         this.addHistory(time, player, message);
         if (player.pname == this.owner) {
-            switch (message) {
-                case "!startraffle":
-                    if (!this.raffle.isActive) {
-                        this.sendMessage("do !raffle for keks", room);
-                        this.raffle.start();
-                    }
-                    break;
-                case "!getwinner":
-                    if (this.raffle.isActive)
-                        this.sendMessage(this.raffle.getRandomPlayer().pname, room);
-                    break;
+            this.doAdminCommand(message, room);
+        }
+        this.doCommand(message, room);
+    }
+}
+
+Bot.prototype.doAdminCommand = function(message, room) {
+    switch (message) {
+        case "!startraffle":
+            if (!this.raffle.isActive) {
+                this.sendMessage("do !raffle for keks", room);
+                this.raffle.start();
             }
-        }
-        switch (message) {
-            case "!kek":
-                this.sendMessage("kek.", room);
-                break;
-            case "!raffle" :
-                if (this.raffle.isActive) {
-                    this.raffle.addPlayer(player);
-                    this.sendMessage(player.pname + " added to raffle.", room);
-                }
-                break;
-        }
+            break;
+        case "!getwinner":
+            if (this.raffle.isActive)
+                this.sendMessage(this.raffle.getRandomPlayer().pname, room);
+            break;
+    }
+}
+
+Bot.prototype.doCommand = function(message, room) {
+    switch (message) {
+        case "!kek":
+            this.sendMessage("kek.", room);
+            break;
+        case "!raffle":
+            if (this.raffle.isActive) {
+                this.raffle.addPlayer(player);
+                this.sendMessage(player.pname + " added to raffle.", room);
+            }
+            break;
     }
 }
 
@@ -125,12 +133,32 @@ Bot.prototype.init = function() {
     return "Bot activated.";
 }
 
-var Tamboola = new Raffle();
-var Kevin = new Bot(Tamboola);
-Kevin.init();
+var BotWindow = function(bot) {
+    this.bot = bot;
+}
+
+BotWindow.prototype.appendPlayerToTable = function(table, data) {
+    table.appendRow().appendToCell(-1, 'log', data);
+}
+
+BotWindow.prototype.open = function() {
+    var windowContent = new west.gui.Scrollpane();
+    var windowTable = new west.gui.Table();
+    windowTable.addColumn('log').appendToCell('head', 'log', 'Command Log');
+    for(var i = 0; i < this.bot.history.length; i++)
+        this.appendPlayerToTable(windowTable, this.bot.history[i]);
+    windowContent.appendContent(windowTable.mainDiv);
+    windowContent.appendContent("LOL");
+    wman.open('twbot', 'twbot', 'noreload').setTitle('twbot').appendToContentPane(windowTable.divMain).setMiniTitle('twbot').setSize('500', '420');
+
+}
+
+var kevin = new Bot(new Raffle());
+kevin.init();
+var botWindow = new BotWindow(kevin);
 
 var oldFunc = Chat.Formatter.formatResponse;
 Chat.Formatter.formatResponse = function(room, from, message, time) {
-    Kevin.handleMesage(message, room, from, time);
+    kevin.handleMesage(message, room, from, time);
     return oldFunc(room, from, message, time);
 };
