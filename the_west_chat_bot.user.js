@@ -13,6 +13,10 @@
     End users are licensed the right to download the code into their web browser(s) for standard and reasonable usage only.
     If you want the script translated, you shall contact the script owner for this.
 */
+var kek = {};
+var PollOption = function(option) {
+    kek[option] = 0;
+}
 var Raffle = function() {
     this.isActive = false;
     this.prize;
@@ -41,10 +45,11 @@ Raffle.prototype.stop = function() {
 }
 
 Raffle.prototype.start = function() {
+    this.resetPlayers();
     this.isActive = true;
 }
 
-Raffle.prototype.reset = function() {
+Raffle.prototype.resetPlayers = function() {
     this.players = [];
 }
 
@@ -91,15 +96,15 @@ Bot.prototype.handleMesage = function(message, room, player, time) {
         this.updateData(message, room, player, time);
         this.addHistory(time, player, message);
         if (player.pname == this.owner) {
-            this.doAdminCommand(message, room);
+            this.doAdminCommand(message, room, player, time);
         }
-        this.doCommand(message, room);
+        this.doCommand(message, room, player, time);
     }
 }
 
-Bot.prototype.doAdminCommand = function(message, room) {
+Bot.prototype.doAdminCommand = function(message, room, player, time) {
     switch (message) {
-        case "!startraffle":
+        case "!initraffle":
             if (!this.raffle.isActive) {
                 this.sendMessage("do !raffle for keks", room);
                 this.raffle.start();
@@ -109,10 +114,14 @@ Bot.prototype.doAdminCommand = function(message, room) {
             if (this.raffle.isActive)
                 this.sendMessage(this.raffle.getRandomPlayer().pname, room);
             break;
+        case "!rafflereset":
+            this.raffle.resetPlayers();
+            this.sendMessage("Raffle reset.", room);
+            break;
     }
 }
 
-Bot.prototype.doCommand = function(message, room) {
+Bot.prototype.doCommand = function(message, room, player, time) {
     switch (message) {
         case "!kek":
             this.sendMessage("kek.", room);
@@ -145,17 +154,89 @@ BotWindow.prototype.open = function() {
     var windowContent = new west.gui.Scrollpane();
     var windowTable = new west.gui.Table();
     windowTable.addColumn('log').appendToCell('head', 'log', 'Command Log');
-    for(var i = 0; i < this.bot.history.length; i++)
+    for (var i = 0; i < this.bot.history.length; i++)
         this.appendPlayerToTable(windowTable, this.bot.history[i]);
-    windowContent.appendContent(windowTable.mainDiv);
+    windowContent.appendContent(windowTable.divMain);
     windowContent.appendContent("LOL");
-    wman.open('twbot', 'twbot', 'noreload').setTitle('twbot').appendToContentPane(windowTable.divMain).setMiniTitle('twbot').setSize('500', '420');
+    wman.open('twbot', 'twbot', 'noreload').setTitle('twbot').appendToContentPane(windowContent.divMain).setMiniTitle('twbot').setSize('500', '420');
 
+}
+
+var styling = "<style>#raffle_table{width:50%; float: left; } .player_name{width:75%;} .player_level{width:25%;} </style>";
+$('head').append(styling);
+
+var RaffleWindow = function(bot) {
+    this.bot = bot;
+}
+
+RaffleWindow.prototype.appendPlayerToTable = function(table, player) {
+    table.appendRow().appendToCell(-1, 'player_level', player.level);
+    table.appendToCell(-1, 'player_name', player.pname);
+}
+
+RaffleWindow.prototype.open = function() {
+    var windowContent = new west.gui.Scrollpane();
+    var windowTable = new west.gui.Table();
+    windowTable.setId('raffle_table');
+    windowTable.addColumn('player_level').appendToCell('head', 'player_level', 'Level');
+    windowTable.addColumn('player_name').appendToCell('head', 'player_name', 'Name');
+    for (var i = 0; i < this.bot.raffle.players.length; i++)
+        this.appendPlayerToTable(windowTable, this.bot.raffle.players[i]);
+    windowContent.appendContent(windowTable.divMain);
+    var testButton = new west.gui.Button("Kek", function() {
+        alert('yay');
+    })
+    var testButton2 = new west.gui.Button("Kek2", function() {
+        alert('yay2');
+    })
+    windowContent.appendContent(testButton.divMain);
+    windowContent.appendContent(testButton2.divMain);
+
+    wman.open('Raffle', 'Raffle', 'noreload').setTitle('Raffle').appendToContentPane(windowContent.divMain).setMiniTitle('Raffle').setSize('500', '420');
 }
 
 var kevin = new Bot(new Raffle());
 kevin.init();
 var botWindow = new BotWindow(kevin);
+var raffleWindow = new RaffleWindow(kevin);
+
+var iconLogs = $('<div></div>').attr({
+    'title': 'TW Bot Command Log',
+    'class': 'menulink'
+}).css({
+    'background': 'url(https://puu.sh/nS9e8/51058dca5d.png)',
+    'background-position': '0px 0px'
+}).mouseleave(function() {
+    $(this).css("background-position", "0px 0px");
+}).mouseenter(function(e) {
+    $(this).css("background-position", "25px 0px");
+}).click(function() {
+    botWindow.open();
+});
+var fix = $('<div></div>').attr({
+    'class': 'menucontainer_bottom'
+});
+
+var raffleMenu = $('<div></div>').attr({
+    'title': 'TW Bot Raffle',
+    'class': 'menulink'
+}).css({
+    'background': 'url(https://puu.sh/nS9e8/51058dca5d.png)',
+    'background-position': '0px 0px'
+}).mouseleave(function() {
+    $(this).css("background-position", "0px 0px");
+}).mouseenter(function(e) {
+    $(this).css("background-position", "25px 0px");
+}).click(function() {
+    raffleWindow.open();
+});
+var fix = $('<div></div>').attr({
+    'class': 'menucontainer_bottom'
+});
+$("#ui_menubar .ui_menucontainer :last").after($('<div></div>').attr({
+    'class': 'ui_menucontainer',
+    'id': 'bot_logs'
+}).append(iconLogs).append(raffleMenu).append(fix));
 
 var oldFunc = Chat.Formatter.formatResponse;
 Chat.Formatter.formatResponse = function(room, from, message, time) {
