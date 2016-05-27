@@ -13,10 +13,30 @@
     End users are licensed the right to download the code into their web browser(s) for standard and reasonable usage only.
     If you want the script translated, you shall contact the script owner for this.
 */
-var kek = {};
-var PollOption = function(option) {
-    kek[option] = 0;
+
+var Poll = function() {
+    this.options = {};
 }
+
+Poll.prototype.addOption = function(option) {
+    this.options[option] = 0;
+}
+
+Poll.prototype.voteOption = function(option) {
+    if(this.options[option] === undefined){
+        this.addOption(option);
+        this.voteOption(option);
+    }
+    else
+        this.options[option]++;
+}
+
+Poll.prototype.resetPoll = function() {
+    this.options = {};
+}
+
+
+
 var Raffle = function() {
     this.isActive = false;
     this.prize;
@@ -53,8 +73,9 @@ Raffle.prototype.resetPlayers = function() {
     this.players = [];
 }
 
-var Bot = function(raffle) {
+var Bot = function(raffle, poll) {
     this.raffle = raffle;
+    this.poll = poll;
     this.owner = Character.name;
     this.colorCode = 990;
     this.history = [];
@@ -195,7 +216,7 @@ RaffleWindow.prototype.open = function() {
     wman.open('Raffle', 'Raffle', 'noreload').setTitle('Raffle').appendToContentPane(windowContent.divMain).setMiniTitle('Raffle').setSize('500', '420');
 }
 
-var kevin = new Bot(new Raffle());
+var kevin = new Bot(new Raffle(), new Poll());
 kevin.init();
 var botWindow = new BotWindow(kevin);
 var raffleWindow = new RaffleWindow(kevin);
