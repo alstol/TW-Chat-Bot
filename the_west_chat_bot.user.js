@@ -14,6 +14,8 @@
     If you want the script translated, you shall contact the script owner for this.
 */
 
+
+//Voting system
 var Poll = function() {
     this.options = {};
 }
@@ -35,8 +37,7 @@ Poll.prototype.resetPoll = function() {
     this.options = {};
 }
 
-
-
+//Raffle system
 var Raffle = function() {
     this.isActive = false;
     this.prize;
@@ -73,6 +74,7 @@ Raffle.prototype.resetPlayers = function() {
     this.players = [];
 }
 
+//The bot itself, requires a raffle and a poll
 var Bot = function(raffle, poll) {
     this.raffle = raffle;
     this.poll = poll;
@@ -163,6 +165,7 @@ Bot.prototype.init = function() {
     return "Bot activated.";
 }
 
+//A command log window
 var BotWindow = function(bot) {
     this.bot = bot;
 }
@@ -183,9 +186,12 @@ BotWindow.prototype.open = function() {
 
 }
 
+
+//Forcing some custom styling
 var styling = "<style>#raffle_table{width:50%; float: left; } .player_name{width:75%;} .player_level{width:25%;} </style>";
 $('head').append(styling);
 
+//A window to have a better view over the raffle
 var RaffleWindow = function(bot) {
     this.bot = bot;
 }
@@ -216,11 +222,15 @@ RaffleWindow.prototype.open = function() {
     wman.open('Raffle', 'Raffle', 'noreload').setTitle('Raffle').appendToContentPane(windowContent.divMain).setMiniTitle('Raffle').setSize('500', '420');
 }
 
+
+//Creating the bot, raffle, poll and windows
 var kevin = new Bot(new Raffle(), new Poll());
 kevin.init();
 var botWindow = new BotWindow(kevin);
 var raffleWindow = new RaffleWindow(kevin);
 
+
+//Adding some temp buttons to open the windows
 var iconLogs = $('<div></div>').attr({
     'title': 'TW Bot Command Log',
     'class': 'menulink'
@@ -259,6 +269,8 @@ $("#ui_menubar .ui_menucontainer :last").after($('<div></div>').attr({
     'id': 'bot_logs'
 }).append(iconLogs).append(raffleMenu).append(fix));
 
+
+//Capturing and handling a message
 var oldFunc = Chat.Formatter.formatResponse;
 Chat.Formatter.formatResponse = function(room, from, message, time) {
     kevin.handleMesage(message, room, from, time);
